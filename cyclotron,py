@@ -41,6 +41,7 @@ while (np.linalg.norm(particlepos) < r_cyclotron): #loop while the magnitude of 
     
 print("The final speed of the particle is", np.linalg.norm(particlev), "m/s")
 
+
 plt.figure(figsize=(12,12)) #create the figure
 plt.plot(particleposx, particleposy) #create the plot
 plt.show()
