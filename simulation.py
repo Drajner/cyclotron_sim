@@ -1,5 +1,5 @@
-import pygame_widgets
 import pygame
+import pygame_widgets
 from pygame_widgets.slider import Slider
 from pygame_widgets.textbox import TextBox
 from pygame_widgets.button import Button
@@ -7,125 +7,103 @@ from pygame_widgets.toggle import Toggle
 import numpy as np
 from cyclotron_calculation import calculate_path
 
-def add(x, y):
-    print(x+y)
-
 BASE_HEIGHT = 960
 BASE_WIDTH = 1280
 BASE_CIRCLE_SIZE = BASE_WIDTH / 2
 
-def main():
 
-    pygame.init()
+class CyclotronSimulator:
 
-    screen = pygame.display.set_mode([BASE_WIDTH+160, BASE_HEIGHT])
+    def __init__(self):
+        self.text_boxes = None
+        self.launch_button = None
+        self.ui_elements = None
+        self.particle_position = None
+        self.iterator = None
+        pygame.init()
+        self.screen = pygame.display.set_mode([BASE_WIDTH + 160, BASE_HEIGHT])
+        self.init_ui_elements()
 
-    iterator = 0
+    def init_ui_elements(self):
+        self.ui_elements = {
+            'v': Slider(self.screen, BASE_WIDTH - 50, 100, 120, 10, min=1, max=500, step=1, initial=100),
+            'b': Slider(self.screen, BASE_WIDTH - 50, 180, 120, 10, min=0.0, max=10, step=0.1, initial=2.0),
+            'm': Slider(self.screen, BASE_WIDTH - 50, 260, 120, 10, min=1, max=100, step=1, initial=1),
+            'q': Slider(self.screen, BASE_WIDTH - 50, 340, 120, 10, min=1, max=100, step=1, initial=1),
+            'negative_q': Toggle(self.screen, BASE_WIDTH - 10, 420, 30, 10)
+        }
 
-    particle_position_x, particle_position_y = ([0],[0])
+        self.launch_button = Button(
+            self.screen, BASE_WIDTH - 40, 470, 100, 40, text="Launch!", fontSize=30,
+            radius=1, pressedColour=(150, 0, 0), onRelease=self.launch
+        )
 
-    q = 1
-    m = 1
-    v = 100
-    b = 2.0
-    negation_q = False
-    #particle_position_x, particle_position_y = calculate_path(3,2,100,2.0)
+        self.text_boxes = {
+            'v': TextBox(self.screen, BASE_WIDTH - 80, 70, 140, 30, fontSize=20, colour=(255, 255, 255),
+                         borderColour=(255, 255, 255), borderThickness=1),
+            'b': TextBox(self.screen, BASE_WIDTH - 80, 150, 140, 30, fontSize=20, colour=(255, 255, 255),
+                         borderColour=(255, 255, 255), borderThickness=1),
+            'm': TextBox(self.screen, BASE_WIDTH - 80, 230, 140, 30, fontSize=20, colour=(255, 255, 255),
+                         borderColour=(255, 255, 255), borderThickness=1),
+            'q': TextBox(self.screen, BASE_WIDTH - 80, 310, 140, 30, fontSize=20, colour=(255, 255, 255),
+                         borderColour=(255, 255, 255), borderThickness=1),
+            'negative_q': TextBox(self.screen, BASE_WIDTH - 40, 390, 140, 30, fontSize=20, colour=(255, 255, 255),
+                                  borderColour=(255, 255, 255), borderThickness=1),
+        }
 
-    def launch():
-        nonlocal particle_position_x
-        nonlocal particle_position_y
-        nonlocal iterator
-        iterator = 0
-        if negation_q:
-            particle_position_x, particle_position_y = calculate_path(q*-1,m,v,b)
-        else:
-            particle_position_x, particle_position_y = calculate_path(q,m,v,b)
+    def launch(self):
+        self.particle_position = calculate_path(
+            self.ui_elements['q'].getValue() * (-1 if self.ui_elements['negative_q'].getValue() else 1),
+            self.ui_elements['m'].getValue(),
+            self.ui_elements['v'].getValue(),
+            self.ui_elements['b'].getValue())
+        self.iterator = 0
 
-    v_desc = TextBox(screen, BASE_WIDTH, 70, 140, 30, fontSize=20, colour=(255,255,255), borderColour=(255,255,255), borderThickness=1)
-    v_slider = Slider(screen, BASE_WIDTH+10, 100, 120, 10, min=1, max=500, step=1, initial=100)
-    v_output = TextBox(screen, BASE_WIDTH+30, 120, 60, 20, fontSize=20, borderColour=(20,20,20), borderThickness=1)
+    def start(self):
+        self.particle_position = ([0], [0])
+        self.iterator = 0
+        semicircle_rect = pygame.Rect(BASE_WIDTH / 4, BASE_HEIGHT / 6, BASE_CIRCLE_SIZE, BASE_CIRCLE_SIZE)
 
-    b_desc = TextBox(screen, BASE_WIDTH, 150, 140, 30, fontSize=20, colour=(255,255,255), borderColour=(255,255,255), borderThickness=1)
-    b_slider = Slider(screen, BASE_WIDTH+10, 180, 120, 10, min=0.0, max=10, step=0.1, initial=2.0)
-    b_output = TextBox(screen, BASE_WIDTH+30, 200, 60, 20, fontSize=20, borderColour=(20,20,20), borderThickness=1)
+        running = True
 
-    m_desc = TextBox(screen, BASE_WIDTH, 230, 140, 30, fontSize=20, colour=(255,255,255), borderColour=(255,255,255), borderThickness=1)
-    m_slider = Slider(screen, BASE_WIDTH+10, 260, 120, 10, min=1, max=100, step=1, initial=1)
-    m_output = TextBox(screen, BASE_WIDTH+30, 280, 60, 20, fontSize=20, borderColour=(20,20,20), borderThickness=1)
+        while running:
+            events = pygame.event.get()
 
-    q_desc = TextBox(screen, BASE_WIDTH, 310, 140, 30, fontSize=20, colour=(255,255,255), borderColour=(255,255,255), borderThickness=1)
-    q_slider = Slider(screen, BASE_WIDTH+10, 340, 120, 10, min=1, max=100, step=1, initial=1)
-    q_output = TextBox(screen, BASE_WIDTH+30, 360, 60, 20, fontSize=20, borderColour=(20,20,20), borderThickness=1)
+            for event in events:
+                if event.type == pygame.QUIT:
+                    running = False
+                    pygame.quit()
+                    return
 
-    negative_q_desc = TextBox(screen, BASE_WIDTH, 390, 140, 30, fontSize=20, colour=(255,255,255), borderColour=(255,255,255), borderThickness=1)
-    negative_q_toggle = Toggle(screen, BASE_WIDTH+50, 420, 30, 10)
+            self.screen.fill((255, 255, 255))
 
-    launch_button = Button(
-        screen, BASE_WIDTH+20, 450, 100, 40,
-        text="Launch!", fontSize=30, radius=1, pressedColour=(150,0,0),
-        onRelease=launch
-    )
+            left_color, right_color = (0, 0, 255), (255, 0, 0)
+            if self.particle_position[0][self.iterator] < 0:
+                left_color, right_color = right_color, left_color
 
-    v_desc.disable()
-    v_output.disable()
-    b_desc.disable()
-    b_output.disable()
-    m_desc.disable()
-    m_output.disable()
-    q_desc.disable()
-    q_output.disable()
-    negative_q_desc.disable()
+            pygame.draw.arc(self.screen, left_color, semicircle_rect, np.radians(90), np.radians(270), 2)
+            pygame.draw.arc(self.screen, right_color, semicircle_rect, np.radians(270), np.radians(90), 2)
+            for i in range(self.iterator):
+                pygame.draw.circle(self.screen, (0, 255, 0),
+                                   (BASE_WIDTH / 2 + BASE_WIDTH * 5 * self.particle_position[0][i],
+                                    BASE_HEIGHT / 2 + BASE_WIDTH * 5 * self.particle_position[1][i]), 1)
 
-    running = True
+            self.text_boxes['v'].setText(f"Voltage [1V-500V]: {self.ui_elements['v'].getValue():.2f}V")
+            self.text_boxes['b'].setText(f"Magnetic Field [0T-10T]: {self.ui_elements['b'].getValue():.2f}T")
+            self.text_boxes['m'].setText(f"Mass [1-100 proton mass]: {self.ui_elements['m'].getValue():.2f}")
+            self.text_boxes['q'].setText(f"Charge [1-100 proton mass]: {self.ui_elements['q'].getValue():.2f}")
+            self.text_boxes['negative_q'].setText(
+                "Negative charge" if self.ui_elements['negative_q'].getValue() else "Positive charge")
 
-    semicircle_rect = pygame.Rect(BASE_WIDTH/4, BASE_HEIGHT/6, BASE_CIRCLE_SIZE, BASE_CIRCLE_SIZE)
-    
-    while running:
-        print(iterator)
-        events = pygame.event.get()
-        for event in events:
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                run = False
-                quit()
+            if self.iterator < len(self.particle_position[0]) - 1:
+                self.iterator += 1
 
-        q = q_slider.getValue()
-        m = m_slider.getValue()
-        v = v_slider.getValue()
-        b = b_slider.getValue()
-        negation_q = negative_q_toggle.getValue()
+            pygame_widgets.update(events)
+            pygame.display.update()
 
-        screen.fill((255, 255, 255))
+        pygame.quit()
 
-        left_color = (0,0,255)
-        right_color = (255,0,0)
-        if(particle_position_x[iterator] < 0):
-            left_color = (255,0,0)
-            right_color = (0,0,255)
-
-        pygame.draw.arc(screen, left_color, semicircle_rect, np.radians(90), np.radians(270), 2)
-        pygame.draw.arc(screen, right_color, semicircle_rect, np.radians(270), np.radians(90), 2)
-        for i in range(iterator):
-            pygame.draw.circle(screen, (0,255,0), (BASE_WIDTH/2+BASE_WIDTH*5*particle_position_x[i],BASE_HEIGHT/2+BASE_WIDTH*5*particle_position_y[i]), 1)
-        v_desc.setText("Voltage [1V-500V]")
-        v_output.setText(str(v_slider.getValue())[:5])
-        b_desc.setText("Magnetic Field [0T-10T]")
-        b_output.setText(str(b_slider.getValue())[:3])
-        m_desc.setText("Mass [1-100 proton mass]")
-        m_output.setText(str(m_slider.getValue())[:3])
-        q_desc.setText("Charge [1-100 proton mass]")
-        q_output.setText(str(q_slider.getValue())[:3])
-        negative_q_desc.setText("Negative charge")
-
-        if iterator < len(particle_position_x)-1:
-            iterator += 1
-
-        pygame_widgets.update(events)
-        pygame.display.update()
-
-        
-
-    pygame.quit()
 
 if __name__ == '__main__':
-    main()
+    simulator = CyclotronSimulator()
+    simulator.start()
