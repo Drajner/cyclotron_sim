@@ -1,1 +1,1 @@
-Symulacja cyklotronu. Projekt wykonany przez Bartłomieja Dudka. Uruchamianie poperzez włączenie simulation.py.
+Symulacja cyklotronu. Projekt wykonany przez Bartłomieja Dudka i Maksyma Nedashkivskyiego. Uruchamianie poperzez włączenie simulation.py.
